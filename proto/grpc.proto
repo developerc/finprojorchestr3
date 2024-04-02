@@ -1,0 +1,41 @@
+syntax = "proto3"; // версия proto файлов
+package finproj; // название пакета
+option go_package = "github.com/developerc/finprojorchestr3/proto";
+
+// Сообщение, описывающее параметры подключаемого агента
+message AgentParams {
+    int32 id = 1; // идентификатор агента
+    string ip = 2;
+    int32 port = 3;
+}
+// Сообщаем агенту его идентификатор
+message AgentParamsResponse {
+    int32 id = 1; // идентификатор агента
+}
+// Сообщение описывающее задачу
+message Task {
+    int32 id = 1;
+    int32 agentid = 2;
+    string status = 3;
+    string expr = 4;
+    float result = 5;
+    int64 begindate = 6;
+    int64 enddate = 7;
+}
+// Сообщение HeartBit request
+message HeartBit {
+    int32 id = 1; //id агента
+}
+// Сообщение HeartBit response
+message HeartBitResp {
+    int32 id = 1; //id агента
+}
+// Определение сервиса с методами
+service OrchServerService {
+	// методы, которые можно будет реализовать и использовать 
+    rpc RegisterNewAgent (AgentParams) returns (AgentParamsResponse); 
+    rpc SendTask(Task) returns (Task);
+    rpc HBreq(HeartBit) returns (HeartBitResp);
+    rpc PullFinishTask(Task) returns (Task);
+    rpc PushFinishTask(Task) returns (Task);
+}
