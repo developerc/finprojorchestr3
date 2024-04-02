@@ -20,3 +20,4 @@ C:\proj\Go\Exam\finprojorchestr3\grpc> go mod init grpc
 go mod tidy
 replace grpc => ./grpc/
 go get grpc
+в главной ветке создадим main.go

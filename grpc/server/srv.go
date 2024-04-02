@@ -40,10 +40,10 @@ func (s *Server) PushFinishTask(ctx context.Context, task *pb.Task) (*pb.Task, e
 	return task, nil
 }
 
-/*func (s *Server) HBreq(ctx context.Context, heartBit *pb.HeartBit) (*pb.HeartBitResp, error) {
+func (s *Server) HBreq(ctx context.Context, heartBit *pb.HeartBit) (*pb.HeartBitResp, error) {
 	//hbr := pb.HeartBitResp
-	return &pb.HeartBitResp, nil
-}*/
+	return &pb.HeartBitResp{}, nil
+}
 
 // обрабатываем запрос на регистрацию агента
 func (s *Server) RegisterNewAgent(ctx context.Context, in *pb.AgentParams) (*pb.AgentParamsResponse, error) {
