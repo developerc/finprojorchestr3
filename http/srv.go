@@ -11,7 +11,7 @@ func home(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Write([]byte("Ответ от Orchestrator"))
-	server.SndTsk()
+	//server.SndTsk()
 }
 
 func handleExpr(w http.ResponseWriter, r *http.Request) { //обрабатываем принятый запрос с выражением
@@ -25,6 +25,7 @@ func handleExpr(w http.ResponseWriter, r *http.Request) { //обрабатыва
 	}
 	expr := r.URL.Query().Get("expr")
 	fmt.Println(expr)
+	server.SndTsk(expr)
 }
 
 func RunHttpSrv() {

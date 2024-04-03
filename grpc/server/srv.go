@@ -58,11 +58,13 @@ func (s *Server) RegisterNewAgent(ctx context.Context, in *pb.AgentParams) (*pb.
 	RegisteredAgentMap[IdAgent] = agent
 	mutex.Unlock()
 	log.Println("RegisteredAgentMap: ", RegisteredAgentMap)
-	//go sndTsk()
 	return &pb.AgentParamsResponse{Id: int32(IdAgent)}, nil
 }
 
-func SndTsk() {
+// добавить очередь задач и обработчик периодической отсылки задач агенту
+// добавить выбор из RegisteredAgentMap очередного агента, отправка задачи//
+// если агент не принял, выбирать другого//
+func SndTsk(expr string) {
 	host := "localhost"
 	port := "5001"
 	addr := fmt.Sprintf("%s:%s", host, port) // используем адрес сервера
@@ -76,7 +78,7 @@ func SndTsk() {
 	defer conn.Close()
 
 	grpcClient := pb.NewOrchServerServiceClient(conn)
-	tskAgent, err := grpcClient.SendTask(context.TODO(), &pb.Task{Id: 1, Expr: "2 + 2"})
+	tskAgent, err := grpcClient.SendTask(context.TODO(), &pb.Task{Id: 1, Expr: expr})
 	if err != nil {
 		log.Println("failed invoking tskAgent: ", err)
 	}
