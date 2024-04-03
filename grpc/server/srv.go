@@ -10,6 +10,7 @@ import (
 
 	pb "github.com/developerc/finprojorchestr3/proto"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure" // для упрощения не будем использовать SSL/TLS аутентификация
 )
 
 var RegisteredAgentMap map[int]Agent //хранилище зарегистрированных агентов
@@ -31,9 +32,9 @@ func NewServer() *Server {
 	return &Server{}
 }
 
-func (s *Server) SendTask(ctx context.Context, task *pb.Task) (*pb.Task, error) {
+/*func (s *Server) SendTask(ctx context.Context, task *pb.Task) (*pb.Task, error) {
 	return task, nil
-}
+}*/
 
 func (s *Server) PushFinishTask(ctx context.Context, task *pb.Task) (*pb.Task, error) {
 
@@ -57,7 +58,29 @@ func (s *Server) RegisterNewAgent(ctx context.Context, in *pb.AgentParams) (*pb.
 	RegisteredAgentMap[IdAgent] = agent
 	mutex.Unlock()
 	log.Println("RegisteredAgentMap: ", RegisteredAgentMap)
+	//go sndTsk()
 	return &pb.AgentParamsResponse{Id: int32(IdAgent)}, nil
+}
+
+func SndTsk() {
+	host := "localhost"
+	port := "5001"
+	addr := fmt.Sprintf("%s:%s", host, port) // используем адрес сервера
+	// установим соединение
+	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Println("could not connect to grpc server: ", err)
+		os.Exit(1)
+	}
+	// закроем соединение, когда выйдем из функции
+	defer conn.Close()
+
+	grpcClient := pb.NewOrchServerServiceClient(conn)
+	tskAgent, err := grpcClient.SendTask(context.TODO(), &pb.Task{Id: 1, Expr: "2 + 2"})
+	if err != nil {
+		log.Println("failed invoking tskAgent: ", err)
+	}
+	fmt.Println("tskAgent:  ", tskAgent)
 }
 
 func CreateOrchGRPCserver() {

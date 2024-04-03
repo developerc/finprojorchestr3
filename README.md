@@ -21,3 +21,10 @@ go mod tidy
 replace grpc => ./grpc/
 go get grpc
 в главной ветке создадим main.go
+mkdir http
+go mod init http
+заполнили srv.go подтянули зависимости
+go mod tidy
+replace grpc => ../grpc/
+go get grpc
+go mod tidy
