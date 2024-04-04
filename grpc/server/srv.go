@@ -7,14 +7,18 @@ import (
 	"net"
 	"os"
 	"sync"
+	"time"
 
 	pb "github.com/developerc/finprojorchestr3/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure" // для упрощения не будем использовать SSL/TLS аутентификация
 )
 
-var RegisteredAgentMap map[int]Agent //хранилище зарегистрированных агентов
-var IdAgent int                      //счетчик ID агентаvvv
+var RegisteredAgentMap map[int]Agent  //хранилище зарегистрированных агентов
+var RegisteredTaskMap map[int]pb.Task //хранилище задач
+var TaskQueue []pb.Task               //очередь задач
+var IdAgent int                       //счетчик ID агента
+var IdTask int                        //счетчик Id задач
 var mutex sync.Mutex
 
 type Agent struct {
@@ -62,9 +66,48 @@ func (s *Server) RegisterNewAgent(ctx context.Context, in *pb.AgentParams) (*pb.
 }
 
 // добавить очередь задач и обработчик периодической отсылки задач агенту
+func HandleHttpExpr(expr string) {
+	var task pb.Task
+	mutex.Lock()
+	IdTask++
+	task.Id = int32(IdTask)
+	task.Expr = expr
+	task.Status = "start"
+	task.Begindate = time.Now().Unix()
+	TaskQueue = append(TaskQueue, task)
+	RegisteredTaskMap[int(task.Id)] = task
+	mutex.Unlock()
+	//fmt.Println(TaskQueue)
+}
+
 // добавить выбор из RegisteredAgentMap очередного агента, отправка задачи//
 // если агент не принял, выбирать другого//
-func SndTsk(expr string) {
+// обработчик очереди задач
+func handlerTaskQueue() {
+	for {
+		if len(TaskQueue) > 0 { //если в очереди есть задачи, начинаем работу
+			if len(RegisteredAgentMap) > 0 { //если есть зарегистрированные агенты
+				fmt.Println(TaskQueue, RegisteredAgentMap)
+				for _, agent := range RegisteredAgentMap {
+					if tskAgent, err := SndTsk(agent, &TaskQueue[0]); tskAgent != nil {
+						if err != nil {
+							log.Println("could not send task: ", err)
+							continue
+						}
+						mutex.Lock()
+						RegisteredTaskMap[int(tskAgent.Id)] = *tskAgent
+						mutex.Unlock()
+						TaskQueue = TaskQueue[1:]
+						break
+					}
+				}
+			}
+		}
+		time.Sleep(1 * time.Second)
+	}
+}
+
+func SndTsk(agent Agent, task *pb.Task) (*pb.Task, error) {
 	host := "localhost"
 	port := "5001"
 	addr := fmt.Sprintf("%s:%s", host, port) // используем адрес сервера
@@ -72,21 +115,27 @@ func SndTsk(expr string) {
 	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Println("could not connect to grpc server: ", err)
-		os.Exit(1)
+		//os.Exit(1)
+		return nil, err
 	}
 	// закроем соединение, когда выйдем из функции
 	defer conn.Close()
 
 	grpcClient := pb.NewOrchServerServiceClient(conn)
-	tskAgent, err := grpcClient.SendTask(context.TODO(), &pb.Task{Id: 1, Expr: expr})
+	tskAgent, err := grpcClient.SendTask(context.TODO(), task /*&pb.Task{Id: 1, Expr: expr}*/)
 	if err != nil {
 		log.Println("failed invoking tskAgent: ", err)
+		return nil, err
 	}
 	fmt.Println("tskAgent:  ", tskAgent)
+
+	return tskAgent, nil
 }
 
 func CreateOrchGRPCserver() {
 	RegisteredAgentMap = make(map[int]Agent)
+	RegisteredTaskMap = make(map[int]pb.Task)
+	go handlerTaskQueue()
 	host := "localhost"
 	port := "5000"
 

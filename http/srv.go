@@ -25,7 +25,8 @@ func handleExpr(w http.ResponseWriter, r *http.Request) { //обрабатыва
 	}
 	expr := r.URL.Query().Get("expr")
 	fmt.Println(expr)
-	server.SndTsk(expr)
+	//server.SndTsk(expr)
+	server.HandleHttpExpr(expr)
 }
 
 func RunHttpSrv() {
