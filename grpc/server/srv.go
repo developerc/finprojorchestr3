@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"strconv"
 	"sync"
 	"time"
 
@@ -108,8 +109,8 @@ func handlerTaskQueue() {
 }
 
 func SndTsk(agent Agent, task *pb.Task) (*pb.Task, error) {
-	host := "localhost"
-	port := "5001"
+	host := agent.Ip                         //"localhost"
+	port := strconv.Itoa(agent.Port)         //"5001"
 	addr := fmt.Sprintf("%s:%s", host, port) // используем адрес сервера
 	// установим соединение
 	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
