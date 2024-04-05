@@ -37,15 +37,6 @@ func NewServer() *Server {
 	return &Server{}
 }
 
-/*func (s *Server) SendTask(ctx context.Context, task *pb.Task) (*pb.Task, error) {
-	return task, nil
-}*/
-
-func (s *Server) PushFinishTask(ctx context.Context, task *pb.Task) (*pb.Task, error) {
-
-	return task, nil
-}
-
 func (s *Server) HBreq(ctx context.Context, heartBit *pb.HeartBit) (*pb.HeartBitResp, error) {
 	//hbr := pb.HeartBitResp
 	return &pb.HeartBitResp{}, nil
@@ -64,6 +55,12 @@ func (s *Server) RegisterNewAgent(ctx context.Context, in *pb.AgentParams) (*pb.
 	mutex.Unlock()
 	log.Println("RegisteredAgentMap: ", RegisteredAgentMap)
 	return &pb.AgentParamsResponse{Id: int32(IdAgent)}, nil
+}
+
+func (s *Server) PushFinishTask(ctx context.Context, task *pb.Task) (*pb.Task, error) {
+	fmt.Println("принимаем решенную задачу: ", task)
+	//TODO сделать занесение решенной задачи в БД
+	return task, nil
 }
 
 // добавить очередь задач и обработчик периодической отсылки задач агенту
