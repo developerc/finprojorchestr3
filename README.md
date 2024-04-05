@@ -28,3 +28,15 @@ go mod tidy
 replace grpc => ../grpc/
 go get grpc
 go mod tidy
+создал папку sqlite
+mkdir sqlite
+cd sqlite
+go mod init sqlite
+go mod tidy
+заполнили srv.go подтянули зависимости
+go get github.com/mattn/go-sqlite3
+go mod tidy
+в файле go.mod
+replace sqlite => ./sqlite/
+go get sqlite
+go mod tidy
