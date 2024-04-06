@@ -19,7 +19,7 @@ var RegisteredAgentMap map[int]Agent  //хранилище зарегистри�
 var RegisteredTaskMap map[int]pb.Task //хранилище задач
 var TaskQueue []pb.Task               //очередь задач
 var IdAgent int                       //счетчик ID агента
-var IdTask int                        //счетчик Id задач
+// var IdTask int                        //счетчик Id задач
 var mutex sync.Mutex
 
 type Agent struct {
@@ -47,14 +47,19 @@ func (s *Server) RegisterNewAgent(ctx context.Context, in *pb.AgentParams) (*pb.
 	var agent Agent = Agent{}
 
 	mutex.Lock()
-	IdAgent++
-	agent.Id = IdAgent
+	//IdAgent++
+	id, err := InsertAgent(in)
+	if err != nil {
+		log.Println("failed insert agent: ", err)
+		return nil, err
+	}
+	agent.Id = int(id)
 	agent.Ip = in.Ip
 	agent.Port = int(in.Port)
-	RegisteredAgentMap[IdAgent] = agent
+	RegisteredAgentMap[int(id)] = agent
 	mutex.Unlock()
 	log.Println("RegisteredAgentMap: ", RegisteredAgentMap)
-	return &pb.AgentParamsResponse{Id: int32(IdAgent)}, nil
+	return &pb.AgentParamsResponse{Id: int32(id)}, nil
 }
 
 func (s *Server) PushFinishTask(ctx context.Context, task *pb.Task) (*pb.Task, error) {
@@ -85,8 +90,6 @@ func HandleHttpExpr(expr string) {
 	//fmt.Println(TaskQueue)
 }
 
-// добавить выбор из RegisteredAgentMap очередного агента, отправка задачи//
-// если агент не принял, выбирать другого//
 // обработчик очереди задач
 func handlerTaskQueue() {
 	for {
@@ -113,6 +116,7 @@ func handlerTaskQueue() {
 	}
 }
 
+// отсылаем задачу агенту со статусом start, если принял к исполнению - возвращает задачу со статусом in_progress
 func SndTsk(agent Agent, task *pb.Task) (*pb.Task, error) {
 	host := agent.Ip                         //"localhost"
 	port := strconv.Itoa(agent.Port)         //"5001"
@@ -142,6 +146,11 @@ func CreateOrchGRPCserver() {
 	CreateSqliteDb()
 	RegisteredAgentMap = make(map[int]Agent)
 	RegisteredTaskMap = make(map[int]pb.Task)
+	var err error
+	TaskQueue, err = GetTasksFromDb()
+	if err != nil {
+		log.Println("failed getting tasks from DB: ", err)
+	}
 	go handlerTaskQueue()
 	host := "localhost"
 	port := "5000"

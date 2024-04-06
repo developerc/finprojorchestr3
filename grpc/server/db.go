@@ -26,7 +26,38 @@ func CreateSqliteDb() error {
 	if err = createTables(ctx, db); err != nil {
 		return errors.New("can't create tables")
 	}
+	if err = DeleteFromAgents(ctx, db); err != nil {
+		return errors.New("error delete from agents")
+	}
 	return nil
+}
+
+func GetTasksFromDb() ([]pb.Task, error) {
+	var tasks []pb.Task = make([]pb.Task, 0)
+	ctx := context.TODO()
+
+	db, err := sql.Open("sqlite3", "store.db")
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+	var q = `SELECT id, agentid, status, expr, result FROM tasks WHERE status = 'in_progress'`
+	rows, err := db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		task := pb.Task{}
+		err := rows.Scan(&task.Id, &task.Agentid, &task.Status, &task.Expr, &task.Result)
+		if err != nil {
+			return nil, err
+		}
+		tasks = append(tasks, task)
+	}
+
+	return tasks, nil
 }
 
 func createTables(ctx context.Context, db *sql.DB) error {
@@ -44,7 +75,7 @@ func createTables(ctx context.Context, db *sql.DB) error {
 
 		agentsTable = `
 	CREATE TABLE IF NOT EXISTS agents(
-		id INTEGER,
+		id INTEGER PRIMARY KEY AUTOINCREMENT, 
 		ip TEXT,
 		port INTEGER
 	);`
@@ -106,4 +137,39 @@ func UpdateTask(task *pb.Task) error {
 	}
 
 	return nil
+}
+
+func DeleteFromAgents(ctx context.Context, db *sql.DB) error {
+	var q = `
+	DELETE FROM agents
+	`
+	_, err := db.ExecContext(ctx, q)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func InsertAgent(agentParams *pb.AgentParams) (int64, error) {
+	ctx := context.TODO()
+
+	db, err := sql.Open("sqlite3", "store.db")
+	if err != nil {
+		return 0, errors.New("can't open db")
+	}
+	defer db.Close()
+
+	var q = `
+	INSERT INTO agents (ip, port) values ($1, $2)
+	`
+	result, err := db.ExecContext(ctx, q, agentParams.Ip, agentParams.Port)
+	if err != nil {
+		return 0, err
+	}
+	id, err := result.LastInsertId()
+	if err != nil {
+		return 0, err
+	}
+	return id, nil
 }
