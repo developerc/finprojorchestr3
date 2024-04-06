@@ -40,3 +40,14 @@ go mod tidy
 replace sqlite => ./sqlite/
 go get sqlite
 go mod tidy
+//---
+создал db.go
+cd grpc
+go get github.com/mattn/go-sqlite3
+go mod tidy
+
+sqlite3 store.db
+sqlite> .tables
+sqlite> select * from tasks;
+sqlite> .quit
+//----

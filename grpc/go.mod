@@ -4,6 +4,7 @@ go 1.22.1
 
 require (
 	github.com/developerc/finprojorchestr3 v0.0.0-20240402193307-4505ac6af433
+	github.com/mattn/go-sqlite3 v1.14.22
 	google.golang.org/grpc v1.62.1
 )
 

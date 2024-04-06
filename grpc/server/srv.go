@@ -74,6 +74,7 @@ func HandleHttpExpr(expr string) {
 	task.Begindate = time.Now().Unix()
 	TaskQueue = append(TaskQueue, task)
 	RegisteredTaskMap[int(task.Id)] = task
+	InsertTask(task)
 	mutex.Unlock()
 	//fmt.Println(TaskQueue)
 }
@@ -131,6 +132,7 @@ func SndTsk(agent Agent, task *pb.Task) (*pb.Task, error) {
 }
 
 func CreateOrchGRPCserver() {
+	CreateSqliteDb()
 	RegisteredAgentMap = make(map[int]Agent)
 	RegisteredTaskMap = make(map[int]pb.Task)
 	go handlerTaskQueue()

@@ -3,11 +3,11 @@ package main
 import (
 	"grpc/server"
 	"http"
-	"sqlite"
+	//"sqlite"
 )
 
 func main() {
-	sqlite.CreateSqliteDb()
+	//sqlite.CreateSqliteDb()
 	go http.RunHttpSrv()
 	server.CreateOrchGRPCserver()
 }
