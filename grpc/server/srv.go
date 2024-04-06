@@ -60,6 +60,7 @@ func (s *Server) RegisterNewAgent(ctx context.Context, in *pb.AgentParams) (*pb.
 func (s *Server) PushFinishTask(ctx context.Context, task *pb.Task) (*pb.Task, error) {
 	fmt.Println("принимаем решенную задачу: ", task)
 	//TODO сделать занесение решенной задачи в БД
+	UpdateTask(task)
 	return task, nil
 }
 
@@ -67,14 +68,19 @@ func (s *Server) PushFinishTask(ctx context.Context, task *pb.Task) (*pb.Task, e
 func HandleHttpExpr(expr string) {
 	var task pb.Task
 	mutex.Lock()
-	IdTask++
-	task.Id = int32(IdTask)
+	//IdTask++
+	//task.Id = int32(IdTask)
 	task.Expr = expr
 	task.Status = "start"
 	task.Begindate = time.Now().Unix()
-	TaskQueue = append(TaskQueue, task)
+
+	id, err := InsertTask(task)
+	if err != nil {
+		log.Println("could not insert task: ", err)
+	}
+	task.Id = int32(id)
 	RegisteredTaskMap[int(task.Id)] = task
-	InsertTask(task)
+	TaskQueue = append(TaskQueue, task)
 	mutex.Unlock()
 	//fmt.Println(TaskQueue)
 }
@@ -86,7 +92,7 @@ func handlerTaskQueue() {
 	for {
 		if len(TaskQueue) > 0 { //если в очереди есть задачи, начинаем работу
 			if len(RegisteredAgentMap) > 0 { //если есть зарегистрированные агенты
-				fmt.Println(TaskQueue, RegisteredAgentMap)
+				//fmt.Println(TaskQueue, RegisteredAgentMap)
 				for _, agent := range RegisteredAgentMap {
 					if tskAgent, err := SndTsk(agent, &TaskQueue[0]); tskAgent != nil {
 						if err != nil {
@@ -97,6 +103,7 @@ func handlerTaskQueue() {
 						RegisteredTaskMap[int(tskAgent.Id)] = *tskAgent
 						mutex.Unlock()
 						TaskQueue = TaskQueue[1:]
+						UpdateTask(tskAgent)
 						break
 					}
 				}
