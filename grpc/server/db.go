@@ -173,3 +173,22 @@ func InsertAgent(agentParams *pb.AgentParams) (int64, error) {
 	}
 	return id, nil
 }
+
+func checkTables() {
+	ctx := context.TODO()
+	db, err := sql.Open("sqlite3", "store.db")
+	if err != nil {
+		fmt.Println("error open DB")
+	}
+	defer db.Close()
+
+	var q = `SELECT * FROM tasks`
+	rows, err := db.QueryContext(ctx, q)
+	if err != nil {
+		fmt.Println("error read rows")
+	}
+	defer rows.Close()
+	for rows.Next() {
+		fmt.Println("rows")
+	}
+}

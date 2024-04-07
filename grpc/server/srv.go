@@ -73,8 +73,6 @@ func (s *Server) PushFinishTask(ctx context.Context, task *pb.Task) (*pb.Task, e
 func HandleHttpExpr(expr string) {
 	var task pb.Task
 	mutex.Lock()
-	//IdTask++
-	//task.Id = int32(IdTask)
 	task.Expr = expr
 	task.Status = "start"
 	task.Begindate = time.Now().Unix()
@@ -87,7 +85,6 @@ func HandleHttpExpr(expr string) {
 	RegisteredTaskMap[int(task.Id)] = task
 	TaskQueue = append(TaskQueue, task)
 	mutex.Unlock()
-	//fmt.Println(TaskQueue)
 }
 
 // обработчик очереди задач
