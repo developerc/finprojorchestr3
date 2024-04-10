@@ -51,3 +51,5 @@ sqlite> .tables
 sqlite> select * from tasks;
 sqlite> .quit
 //----
+POST запрос с задачей
+http://localhost:8080/send_expr/?expr=1%2B6

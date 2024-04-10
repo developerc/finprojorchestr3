@@ -4,11 +4,15 @@ go 1.22.1
 
 replace grpc => ../grpc/
 
-require grpc v0.0.0-00010101000000-000000000000
+require (
+	github.com/golang-jwt/jwt/v5 v5.2.1
+	grpc v0.0.0-00010101000000-000000000000
+)
 
 require (
 	github.com/developerc/finprojorchestr3 v0.0.0-20240402193307-4505ac6af433 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
+	github.com/mattn/go-sqlite3 v1.14.22 // indirect
 	golang.org/x/net v0.20.0 // indirect
 	golang.org/x/sys v0.16.0 // indirect
 	golang.org/x/text v0.14.0 // indirect

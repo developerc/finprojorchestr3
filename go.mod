@@ -15,7 +15,10 @@ require (
 	http v0.0.0-00010101000000-000000000000
 )
 
-require github.com/mattn/go-sqlite3 v1.14.22 // indirect
+require (
+	github.com/golang-jwt/jwt/v5 v5.2.1 // indirect
+	github.com/mattn/go-sqlite3 v1.14.22 // indirect
+)
 
 require (
 	github.com/golang/protobuf v1.5.3 // indirect
@@ -23,5 +26,4 @@ require (
 	golang.org/x/sys v0.16.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240123012728-ef4313101c80 // indirect
-	sqlite v0.0.0-00010101000000-000000000000
 )

@@ -1,0 +1,53 @@
+<!doctype html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Аутентификация</title>
+    <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+	<link rel="stylesheet" href="/stylesheets/main.css">
+</head>
+<body>
+	<h1>Страница аутентификации</h1>
+    <label> логин:  </label>
+    <input type="text" id="lgn"><br><br>
+    <label> пароль:  </label>
+    <input type="text" id="psw"><br><br>
+    <input   id="button1" type="button" name="Button1" value="Авторизация пользователя"><br><br>
+    <input   id="button2" type="button" name="Button2" value="Регистрация пользователя">
+
+    <script>
+        $("#button1").on("click", function(){
+            var lgn = $("#lgn").val()
+            console.log(window.localStorage.getItem("mytoken"))
+            console.log(lgn)
+            var url = "http://localhost:8080/api/v1/login/?lgn=" + $("#lgn").val() + "&psw=" + $("#psw").val()
+                $.ajax({
+                type: 'POST',
+                url: url,
+                dataType: 'json',
+                async: false,
+                success: function (result) {
+                    var stringData = JSON.stringify(result);
+                    console.log(stringData);
+                    var data = JSON.parse(stringData);
+                    //console.log(data);
+                    var token = data.token
+                    window.localStorage.setItem("mytoken", token);
+                    console.log(window.localStorage.getItem("mytoken"))
+                    //document.location.href = './example.html'; 
+                    //window.location.href = "https://dzen.ru";                    
+                },
+                statusCode: {				
+                    400: function() {				  
+                        alert("method is no POST!");					
+                    }
+                },
+                error: function (jqXHR, testStatus, errorThrown) {
+                    console.log('error application')
+                }
+            });
+        });
+
+    </script>
+</body>
+</html>
