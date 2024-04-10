@@ -79,6 +79,13 @@ func createTables(ctx context.Context, db *sql.DB) error {
 		ip TEXT,
 		port INTEGER
 	);`
+
+		usersTable = `
+	CREATE TABLE IF NOT EXISTS users(
+		id INTEGER PRIMARY KEY AUTOINCREMENT, 
+		lgn TEXT NOT NULL UNIQUE,
+		psw TEXT NOT NULL
+	);`
 	)
 
 	if _, err := db.ExecContext(ctx, tasksTable); err != nil {
@@ -86,6 +93,51 @@ func createTables(ctx context.Context, db *sql.DB) error {
 	}
 
 	if _, err := db.ExecContext(ctx, agentsTable); err != nil {
+		return err
+	}
+
+	if _, err := db.ExecContext(ctx, usersTable); err != nil {
+		return err
+	}
+	return nil
+}
+
+func IsPswValid(lgn string, psw string) error {
+	ctx := context.TODO()
+
+	db, err := sql.Open("sqlite3", "store.db")
+	if err != nil {
+		return errors.New("can't open db")
+	}
+	defer db.Close()
+
+	var pswInTable string
+	var q = "SELECT psw FROM users WHERE lgn = $1"
+	err = db.QueryRowContext(ctx, q, lgn).Scan(&pswInTable)
+	if err != nil {
+		return err
+	}
+	if psw != pswInTable {
+		return errors.New("password invalid")
+	}
+
+	return nil
+}
+
+func InsertUser(lgn string, psw string) error {
+	ctx := context.TODO()
+
+	db, err := sql.Open("sqlite3", "store.db")
+	if err != nil {
+		return errors.New("can't open db")
+	}
+	defer db.Close()
+
+	var q = `
+	INSERT INTO users ( lgn, psw ) values ($1, $2)
+	`
+	_, err = db.ExecContext(ctx, q, lgn, psw)
+	if err != nil {
 		return err
 	}
 	return nil

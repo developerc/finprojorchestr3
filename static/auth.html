@@ -3,8 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<title>Аутентификация</title>
-    <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
-	<link rel="stylesheet" href="/stylesheets/main.css">
+    <script src="https://code.jquery.com/jquery-3.7.0.js"></script>	
 </head>
 <body>
 	<h1>Страница аутентификации</h1>
@@ -13,13 +12,15 @@
     <label> пароль:  </label>
     <input type="text" id="psw"><br><br>
     <input   id="button1" type="button" name="Button1" value="Авторизация пользователя"><br><br>
-    <input   id="button2" type="button" name="Button2" value="Регистрация пользователя">
+    <input   id="button2" type="button" name="Button2" value="Регистрация пользователя"><br><br>
+    <label id="succ"></label><br>
+    
 
     <script>
-        $("#button1").on("click", function(){
-            var lgn = $("#lgn").val()
-            console.log(window.localStorage.getItem("mytoken"))
-            console.log(lgn)
+        $("#button1").on("click", function(){   //запрос на авторизацию
+            //var lgn = $("#lgn").val()
+            //console.log(window.localStorage.getItem("mytoken"))
+            //console.log(lgn)
             var url = "http://localhost:8080/api/v1/login/?lgn=" + $("#lgn").val() + "&psw=" + $("#psw").val()
                 $.ajax({
                 type: 'POST',
@@ -30,10 +31,27 @@
                     var stringData = JSON.stringify(result);
                     console.log(stringData);
                     var data = JSON.parse(stringData);
-                    //console.log(data);
-                    var token = data.token
-                    window.localStorage.setItem("mytoken", token);
-                    console.log(window.localStorage.getItem("mytoken"))
+                    console.log(data);
+                    switch(data.result){
+                        case "success":
+                            window.localStorage.setItem("mytoken", data.token);
+                            console.log(window.localStorage.getItem("mytoken"));
+                            $("#succ").text("Пользователь успешно авторизовался");
+                            $("#succ").css("color", "green");
+                            break;
+                        case "password invalid":
+                            $("#succ").text("Ошибка ввода пароля");
+                            $("#succ").css("color", "red");
+                            break;
+                        case "sql: no rows in result set":
+                            $("#succ").text("Пользователь не существует");
+                            $("#succ").css("color", "red");
+                            break;
+                        default:
+                            $("#succ").text("Неизвестная ошибка");
+                            $("#succ").css("color", "red");
+                    }
+                    //TODO сделать переход на страницу отсылки задач и обработку запросов                                        
                     //document.location.href = './example.html'; 
                     //window.location.href = "https://dzen.ru";                    
                 },
@@ -48,6 +66,48 @@
             });
         });
 
+        $("#button2").on("click", function(){       //запрос на регистрацию
+            var url = "http://localhost:8080/api/v1/register/?lgn=" + $("#lgn").val() + "&psw=" + $("#psw").val()
+            $.ajax({
+                type: 'POST',
+                url: url,
+                dataType: 'json',
+                async: false,
+                success: function (result) {
+                    var stringData = JSON.stringify(result);
+                    console.log(stringData);
+                    var data = JSON.parse(stringData);
+                    console.log(data);
+                    var res = data.result
+                    if (res=="success"){
+                        console.log("success inserted user");
+                        $("#succ").text("Пользователь успешно зарегистрировался")
+                        $("#succ").css("color", "green")
+                    } else {
+                        console.log("not success inserted user");
+                        if(res=="UNIQUE constraint failed"){
+                            $("#succ").text("Такой пользователь уже существует")
+                        } else {
+                            $("#succ").text("Ошибка регистрации пользователя")
+                        }                        
+                        $("#succ").css("color", "red")
+                    }
+                    //var token = data.token
+                    //window.localStorage.setItem("mytoken", token);
+                    //console.log(window.localStorage.getItem("mytoken"))
+                    //document.location.href = './example.html'; 
+                    //window.location.href = "https://dzen.ru";                    
+                },
+                statusCode: {				
+                    400: function() {				  
+                        alert("method is no POST!");					
+                    }
+                },
+                error: function (jqXHR, testStatus, errorThrown) {
+                    console.log('error application')
+                }
+            });
+        });
     </script>
 </body>
 </html>
