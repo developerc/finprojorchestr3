@@ -23,11 +23,11 @@ type Registration struct {
 
 const hmacSampleSecret = "super_secret_signature"
 
-func makeToken() string {
+func makeToken(lgn string) string {
 
 	now := time.Now()
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"name": "user_name",
+		"name": lgn,
 		//"nbf":  now.Add(time.Minute).Unix(),
 		"nbf": now.Unix(),
 		"exp": now.Add(60 * time.Minute).Unix(),
@@ -62,8 +62,23 @@ func handleExpr(w http.ResponseWriter, r *http.Request) { //обрабатыва
 	}
 	expr := r.URL.Query().Get("expr")
 	fmt.Println(expr)
-	//server.SndTsk(expr)
-	server.HandleHttpExpr(expr)
+
+	task, err := server.HandleHttpExpr(expr)
+	if err != nil {
+		w.WriteHeader(http.StatusNotAcceptable) //406
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Write([]byte("StatusBadRequest"))
+		return
+	}
+	//В ответе отсылаем ID задачи
+	js, err := json.Marshal(task)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Write(js)
 }
 
 // обработчик запроса на регистрацию
@@ -110,11 +125,6 @@ func register(w http.ResponseWriter, r *http.Request) {
 
 // Обработчик запроса на авторизацию
 func login(w http.ResponseWriter, r *http.Request) {
-	//w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	//w.Header().Set("Access-Control-Allow-Origin", "*")
-	//w.Write([]byte("Ответ от Orchestrator"))
-	//http.Redirect(w, r, "https://dzen.ru", http.StatusSeeOther)
-	//http.Redirect(w, r, "/site/", http.StatusSeeOther)
 	//Методом POST передается выражение для вычисления
 	if r.Method != http.MethodPost { //если это не POST
 		log.Println("method is no POST!")
@@ -131,7 +141,7 @@ func login(w http.ResponseWriter, r *http.Request) {
 	//если аутентификация успешна
 	if err := server.IsPswValid(lgn, psw); err == nil {
 		auth.Result = "success"
-		token := makeToken()
+		token := makeToken(lgn)
 		auth.Token = token
 	} else {
 		fmt.Println("err: ", string(err.Error()))
@@ -151,6 +161,41 @@ func login(w http.ResponseWriter, r *http.Request) {
 	w.Write(js)
 }
 
+// Middleware авторизация
+func Authorization(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		auth := r.Header.Get("Authorization") // получаем из заголовка значение параметра Authorization
+		fmt.Println("Authorization: ", auth)
+		tokenFromString, err := jwt.Parse(auth, func(token *jwt.Token) (interface{}, error) {
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				panic(fmt.Errorf("unexpected signing method: %v", token.Header["alg"]))
+			}
+			return []byte(hmacSampleSecret), nil
+		})
+		if err != nil {
+			log.Fatal(err)
+		}
+		if claims, ok := tokenFromString.Claims.(jwt.MapClaims); ok {
+			fmt.Println("user name: ", claims["name"])
+			//проверим есть ли такое имя в базе
+			if err = server.LoginExists(claims["name"].(string)); err != nil {
+				http.Error(w, "Unauthorized", http.StatusUnauthorized) // вернём ошибку авторизации
+			}
+		} else {
+			//panic(err)
+			http.Error(w, "Unauthorized", http.StatusUnauthorized) // вернём ошибку авторизации
+		}
+
+		/*if auth != "Basic userid:password" {  // авторизация НЕправильная?
+			http.Error( w, "Unauthorized", http.StatusUnauthorized )  // вернём ошибку авторизации
+			return
+		  }*/
+
+		next.ServeHTTP(w, r) // обрабатываем запрос дальше
+	}
+}
+
 func RunHttpSrv() {
 	/*fmt.Println("running http server ...")
 	mux := http.NewServeMux()
@@ -161,7 +206,7 @@ func RunHttpSrv() {
 	http.Handle("/static/", http.StripPrefix("/static/", fs))
 	http.HandleFunc("/api/v1/login/", login)
 	http.HandleFunc("/api/v1/register/", register)
-	http.HandleFunc("/api/v1/send_expr/", handleExpr) //POST Запрос отправки вычисления выражения
+	http.HandleFunc("/api/v1/send_expr/", Authorization(handleExpr)) //POST Запрос отправки вычисления выражения
 
 	log.Print("Listening on :8080...")
 	err := http.ListenAndServe(":8080", nil)

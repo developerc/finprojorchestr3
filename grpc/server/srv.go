@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net"
@@ -27,6 +28,16 @@ type Agent struct {
 	Ip   string `json:"ip"`
 	Port int    `json:"port"`
 	//mutex sync.Mutex
+}
+
+type Task struct {
+	Id        int       `json:"id"`
+	AgentId   int       `json:"agentid"`
+	Expr      string    `json:"expr"`
+	Result    float64   `json:"result"`
+	Status    string    `json:"status"`
+	BeginDate time.Time `json:"begindate"`
+	EndDate   time.Time `json:"enddate"`
 }
 
 type Server struct {
@@ -70,7 +81,8 @@ func (s *Server) PushFinishTask(ctx context.Context, task *pb.Task) (*pb.Task, e
 }
 
 // добавить очередь задач и обработчик периодической отсылки задач агенту
-func HandleHttpExpr(expr string) {
+func HandleHttpExpr(expr string) (Task, error) {
+	var taskResp Task = Task{}
 	var task pb.Task
 	mutex.Lock()
 	task.Expr = expr
@@ -80,11 +92,20 @@ func HandleHttpExpr(expr string) {
 	id, err := InsertTask(task)
 	if err != nil {
 		log.Println("could not insert task: ", err)
+		return taskResp, errors.New("could not insert task")
 	}
 	task.Id = int32(id)
 	RegisteredTaskMap[int(task.Id)] = task
 	TaskQueue = append(TaskQueue, task)
 	mutex.Unlock()
+
+	taskResp.Id = int(task.Id)
+	taskResp.AgentId = int(task.Agentid)
+	taskResp.Expr = task.Expr
+	taskResp.Result = float64(task.Result)
+	taskResp.Status = task.Status
+	taskResp.BeginDate = time.Unix(task.Begindate, 0)
+	return taskResp, nil
 }
 
 // обработчик очереди задач

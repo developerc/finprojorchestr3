@@ -38,6 +38,7 @@
                             console.log(window.localStorage.getItem("mytoken"));
                             $("#succ").text("Пользователь успешно авторизовался");
                             $("#succ").css("color", "green");
+                            document.location.href = './tasks.html'; 
                             break;
                         case "password invalid":
                             $("#succ").text("Ошибка ввода пароля");
@@ -52,7 +53,7 @@
                             $("#succ").css("color", "red");
                     }
                     //TODO сделать переход на страницу отсылки задач и обработку запросов                                        
-                    //document.location.href = './example.html'; 
+                    
                     //window.location.href = "https://dzen.ru";                    
                 },
                 statusCode: {				

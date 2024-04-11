@@ -102,6 +102,28 @@ func createTables(ctx context.Context, db *sql.DB) error {
 	return nil
 }
 
+func LoginExists(lgn string) error {
+	ctx := context.TODO()
+
+	db, err := sql.Open("sqlite3", "store.db")
+	if err != nil {
+		return errors.New("can't open db")
+	}
+	defer db.Close()
+
+	var lgnInTable string
+	var q = "SELECT lgn FROM users WHERE lgn = $1"
+	err = db.QueryRowContext(ctx, q, lgn).Scan(&lgnInTable)
+	if err != nil {
+		return err
+	}
+	if lgn != lgnInTable {
+		return errors.New("password invalid")
+	}
+
+	return nil
+}
+
 func IsPswValid(lgn string, psw string) error {
 	ctx := context.TODO()
 
