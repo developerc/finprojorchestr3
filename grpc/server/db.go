@@ -102,6 +102,28 @@ func createTables(ctx context.Context, db *sql.DB) error {
 	return nil
 }
 
+func GetTaskById(id int64) (Task, error) {
+	fmt.Println("from GetTaskById id:", id)
+	var task Task = Task{}
+	ctx := context.TODO()
+
+	db, err := sql.Open("sqlite3", "store.db")
+	if err != nil {
+		return task, errors.New("can't open db")
+	}
+	defer db.Close()
+
+	var q = "SELECT id, agentid, status, expr, result, begindate, enddate FROM tasks WHERE id = $1"
+	err = db.QueryRowContext(ctx, q, id).Scan(&task.Id, &task.AgentId, &task.Status, &task.Expr, &task.Result, &task.BeginDate, &task.EndDate)
+	if err != nil {
+		fmt.Println(err)
+		return task, err
+	}
+
+	fmt.Println("from GetTaskById task:", task)
+	return task, err
+}
+
 func LoginExists(lgn string) error {
 	ctx := context.TODO()
 

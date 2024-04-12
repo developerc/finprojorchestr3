@@ -6,6 +6,7 @@ import (
 	"grpc/server"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -41,6 +42,41 @@ func makeToken(lgn string) string {
 
 	fmt.Println(tokenString)
 	return tokenString
+}
+
+func getIdResult(w http.ResponseWriter, r *http.Request) { //Получение результата по ID задачи
+	if r.Method != http.MethodGet { //если это не GET
+		fmt.Println("method is no GET!")
+		w.WriteHeader(http.StatusBadRequest) //400
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Write([]byte("StatusBadRequest"))
+		return
+	}
+	id := r.URL.Query().Get("id")
+	fmt.Println("id: ", id)
+	//вызовем функцию получения задачи по id
+	n, err := strconv.ParseInt(id, 10, 64)
+	if err == nil {
+		fmt.Printf("%d of type %T", n, n)
+	}
+	task, err := server.GetTaskById(n)
+	if err != nil {
+		fmt.Println("not fount task with ID")
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.WriteHeader(http.StatusInternalServerError) //500
+		w.Write([]byte("not fount task with ID"))
+		return
+	}
+	fmt.Println(task)
+	// В ответе JSON с ID нужной задачи
+	js, err := json.Marshal(task)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Write(js)
 }
 
 // Обработчик тестового запроса.
@@ -206,7 +242,8 @@ func RunHttpSrv() {
 	http.Handle("/static/", http.StripPrefix("/static/", fs))
 	http.HandleFunc("/api/v1/login/", login)
 	http.HandleFunc("/api/v1/register/", register)
-	http.HandleFunc("/api/v1/send_expr/", Authorization(handleExpr)) //POST Запрос отправки вычисления выражения
+	http.HandleFunc("/api/v1/send_expr/", Authorization(handleExpr))      //POST Запрос отправки вычисления выражения
+	http.HandleFunc("/api/v1/get_id_result/", Authorization(getIdResult)) //POST Запрос отправки вычисления выражения
 
 	log.Print("Listening on :8080...")
 	err := http.ListenAndServe(":8080", nil)

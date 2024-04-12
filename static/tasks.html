@@ -85,12 +85,14 @@ $.ajax({
 });		
 
 $("#button2").on("click", function(){
-var expr = "http://localhost:8080/get_id_result/?id=" + $("#lab2").val()
+	console.log("получить результат по id")
+var expr = "http://localhost:8080/api/v1/get_id_result/?id=" + $("#lab2").val()
 $.ajax({
             type: 'GET',
             url: expr,
             dataType: 'json',
             async: false,
+			headers: {"Authorization": window.localStorage.getItem('mytoken')},
             success: function (result) {
                 var stringData = JSON.stringify(result);
                 console.log(stringData);
