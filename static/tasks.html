@@ -71,13 +71,12 @@ $.ajax({
 			statusCode: {				
 				400: function() {				  
 					alert("Выражение содержит невалидный символ!");					
-				}
-			},
-            statusCode: {				
+				},
 				401: function() {				  
-					alert("Пользователь не авторизован!");					
+					alert("Пользователь не авторизован!");	
+					document.location.href = './auth.html'; 				
 				}
-			},
+			},            
             error: function (jqXHR, testStatus, errorThrown) {
                 console.log('error application')
             }
@@ -109,6 +108,10 @@ $.ajax({
 			statusCode: {				
 				500: function() {				  
 					alert("Не найдена задача с таким номером!");					
+				},
+				401: function() {				  
+					alert("Пользователь не авторизован!");	
+					document.location.href = './auth.html'; 				
 				}
 			},
             error: function (jqXHR, testStatus, errorThrown) {
@@ -117,70 +120,71 @@ $.ajax({
         });
 });		
 
-$("#button3").on("click", function(){
-var expr = "http://localhost:8080/get_task_list/"
+$("#button3").on("click", function(){	//Получение списка задач
+var expr = "http://localhost:8080/api/v1/get_task_list/"
 $.ajax({
             type: 'GET',
             url: expr,
             dataType: 'json',
             async: false,
+			headers: {"Authorization": window.localStorage.getItem('mytoken')},
             success: function (result) {				
                 var stringData = JSON.stringify(result);
                 console.log(stringData);
                 var json = $.parseJSON(stringData);
 				console.log(json);
 				taVal = ""
-				$(json).each(function (i, val) {
-					$.each(val, function (k, v) {
-					console.log(k + " : " + v);
+				$(json).each(function (i, v) {
+					//$.each(val, function (k, v) {
+					//console.log(k + " : " + v);
 					//var task = $.parseJSON(v);
 					//$("#textarea").val(v.result);
 					taVal = taVal + "ID задачи: " + v.id + " ID агента: " + v.agentid + " Задача: " + v.expr + " Результат: " + v.result+  " Статус: " + v.status +  " Дата начала: " + v.begindate +  " Дата окончания: " + v.enddate +"\n"
-				  });
+				  //});
 				});
 				$("#textarea1").val(taVal);
-				/*for (var task in data){
-					tObj = JSON.parse(task);
-					console.log(tObj);
-				}*/
-				/*$("#lab2").val(data.id);
-				$("#lab3").val(data.agentid);
-				$("#lab4").val(data.expr);
-				$("#lab5").val(data.result);
-				$("#lab6").val(data.status);
-				$("#lab7").val(data.begindate);
-				$("#lab8").val(data.enddate);*/
             },
 			statusCode: {				
 				400: function() {				  
 					alert("Это не GET запрос!");					
+				},
+				401: function() {				  
+					alert("Пользователь не авторизован!");	
+					document.location.href = './auth.html'; 				
+				},
+				500: function() {				  
+					alert("Error getting tasks!");					
 				}
-			},
+			},			
             error: function (jqXHR, testStatus, errorThrown) {
                 console.log('error application')
             }
         });
 });		
 
-$("#button4").on("click", function(){
-var expr = "http://localhost:8080/get_list_task_time/"
+$("#button4").on("click", function(){	//Получение списка незавершенных задач
+var expr = "http://localhost:8080/api/v1/get_list_task_time/"
 $.ajax({
             type: 'GET',
             url: expr,
             dataType: 'json',
             async: false,
+			headers: {"Authorization": window.localStorage.getItem('mytoken')},
             success: function (result) {				
                 var stringData = JSON.stringify(result);
                 console.log(stringData);
                 var json = $.parseJSON(stringData);
 				console.log(json);
 				taVal = ""
-				$(json).each(function (i, val) {
-					//$.each(val, function (k, v) {
+				$(json).each(function (i, val) {					
 					console.log( val);
-					taVal = taVal + "ID задачи: " + val.idtask + " Длительность выполнения сек: " + val.duration +"\n"
-					//taVal = taVal + "ID задачи: " + v.id + " ID агента: " + v.agentid + " Задача: " + v.expr + " Результат: " + v.result+  " Статус: " + v.status +  " Дата начала: " + v.begindate +  " Дата окончания: " + v.enddate +"\n"
-				  //});
+					var begdat = new Date(val.begindate)
+					//console.log(begdat.getTime())
+					const currentTime   = new Date().getTime();
+					//console.log(currentTime)
+					var seconds = (currentTime - begdat.getTime())/1000					
+					//console.log(seconds)					
+					taVal = taVal + "ID задачи: " + val.id + " ID агента: " + val.agentid + " Задача: " + val.expr + " Результат: " + val.result+  " Статус: " + val.status +  " Дата начала: " + val.begindate +  " Продолжительность, сек: " + seconds +"\n"				  
 				});
 				$("#textarea2").val(taVal);
 				
@@ -188,6 +192,10 @@ $.ajax({
 			statusCode: {				
 				400: function() {				  
 					alert("Это не GET запрос!");					
+				},
+				401: function() {				  
+					alert("Пользователь не авторизован!");	
+					document.location.href = './auth.html'; 				
 				}
 			},
             error: function (jqXHR, testStatus, errorThrown) {
@@ -196,13 +204,14 @@ $.ajax({
         });
 });		
 
-$("#button5").on("click", function(){
-var expr = "http://localhost:8080/get_agent_list/"
+$("#button5").on("click", function(){	//Получение списка задействованных агентов
+var expr = "http://localhost:8080/api/v1/get_agent_list/"
 $.ajax({
             type: 'GET',
             url: expr,
             dataType: 'json',
             async: false,
+			headers: {"Authorization": window.localStorage.getItem('mytoken')},
             success: function (result) {				
                 var stringData = JSON.stringify(result);
                 console.log(stringData);
@@ -217,7 +226,12 @@ $.ajax({
             },
 			statusCode: {				
 				400: function() {				  
-					alert("Это не GET запрос!");					
+					alert("Это не GET запрос!");	
+					//document.location.href = './tasks.html'; 				
+				},
+				401: function() {				  
+					alert("Пользователь не авторизован!");	
+					document.location.href = './auth.html'; 				
 				}
 			},
             error: function (jqXHR, testStatus, errorThrown) {

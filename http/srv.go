@@ -22,6 +22,11 @@ type Registration struct {
 	Result string `json:"result"`
 }
 
+type AgentTask struct {
+	AgentId int `json:"agentid"`
+	TaskId  int `json:"taskid"`
+}
+
 const hmacSampleSecret = "super_secret_signature"
 
 func makeToken(lgn string) string {
@@ -42,6 +47,90 @@ func makeToken(lgn string) string {
 
 	fmt.Println(tokenString)
 	return tokenString
+}
+
+func getAgentList(w http.ResponseWriter, r *http.Request) { //обрабатываем GET запрос на получение списка пар ID_агента : ID_задачи
+	if r.Method != http.MethodGet { //если это не GET
+		fmt.Println("method is no GET!")
+		w.WriteHeader(http.StatusBadRequest) //400
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Write([]byte("StatusBadRequest"))
+		return
+	}
+	agentTaskList := make([]AgentTask, 0)
+	tasksInProgress, err := server.GetTasksInProgress()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	// доделать получение списка agent : task
+	for _, task := range tasksInProgress {
+		agentTask := AgentTask{}
+		agentTask.AgentId = task.AgentId
+		agentTask.TaskId = task.Id
+		agentTaskList = append(agentTaskList, agentTask)
+	}
+	//В ответе отсылаем ID_агента : ID_задачи
+	js, err := json.Marshal(agentTaskList)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Write(js)
+}
+
+func getListTaskTime(w http.ResponseWriter, r *http.Request) { //обрабатываем GET запрос Получение списка незавершенных задач
+	if r.Method != http.MethodGet { //если это не GET
+		fmt.Println("method is no GET!")
+		w.WriteHeader(http.StatusBadRequest) //400
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Write([]byte("StatusBadRequest"))
+		return
+	}
+	//в ответе отсылаем список задач
+	tasks, err := server.GetTasksInProgress()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError) //500
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Write([]byte("Error getting tasks"))
+		return
+	}
+	js, err := json.Marshal(tasks)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Write(js)
+}
+
+func getTaskList(w http.ResponseWriter, r *http.Request) { //обрабатываем GET запрос на получение списка задач
+	if r.Method != http.MethodGet { //если это не GET
+		fmt.Println("method is no GET!")
+		w.WriteHeader(http.StatusBadRequest) //400
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Write([]byte("StatusBadRequest"))
+		return
+	}
+	//в ответе отсылаем список задач
+	tasks, err := server.GetAllTasks()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError) //500
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Write([]byte("Error getting tasks"))
+		return
+	}
+	js, err := json.Marshal(tasks)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Write(js)
 }
 
 func getIdResult(w http.ResponseWriter, r *http.Request) { //Получение результата по ID задачи
@@ -205,45 +294,42 @@ func Authorization(next http.HandlerFunc) http.HandlerFunc {
 		fmt.Println("Authorization: ", auth)
 		tokenFromString, err := jwt.Parse(auth, func(token *jwt.Token) (interface{}, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				panic(fmt.Errorf("unexpected signing method: %v", token.Header["alg"]))
+				//panic(fmt.Errorf("unexpected signing method: %v", token.Header["alg"]))
+				http.Error(w, "Unauthorized", http.StatusUnauthorized) // вернём ошибку авторизации 401
 			}
 			return []byte(hmacSampleSecret), nil
 		})
 		if err != nil {
-			log.Fatal(err)
+			//log.Fatal(err)
+			log.Println(err)
+			http.Error(w, "Unauthorized", http.StatusUnauthorized) // вернём ошибку авторизации 401
 		}
 		if claims, ok := tokenFromString.Claims.(jwt.MapClaims); ok {
 			fmt.Println("user name: ", claims["name"])
 			//проверим есть ли такое имя в базе
 			if err = server.LoginExists(claims["name"].(string)); err != nil {
-				http.Error(w, "Unauthorized", http.StatusUnauthorized) // вернём ошибку авторизации
+				log.Println(err)
+				http.Error(w, "Unauthorized", http.StatusUnauthorized) // вернём ошибку авторизации 401
 			}
 		} else {
-			//panic(err)
-			http.Error(w, "Unauthorized", http.StatusUnauthorized) // вернём ошибку авторизации
+			//log.Println(err)
+			http.Error(w, "Unauthorized", http.StatusUnauthorized) // вернём ошибку авторизации 401
 		}
-
-		/*if auth != "Basic userid:password" {  // авторизация НЕправильная?
-			http.Error( w, "Unauthorized", http.StatusUnauthorized )  // вернём ошибку авторизации
-			return
-		  }*/
 
 		next.ServeHTTP(w, r) // обрабатываем запрос дальше
 	}
 }
 
 func RunHttpSrv() {
-	/*fmt.Println("running http server ...")
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", home)                 //проверка соединения с сервером
-	mux.HandleFunc("/send_expr/", handleExpr) //POST Запрос отправки вычисления выражения
-	http.ListenAndServe(":8080", mux)*/
 	fs := http.FileServer(http.Dir("./static"))
 	http.Handle("/static/", http.StripPrefix("/static/", fs))
 	http.HandleFunc("/api/v1/login/", login)
 	http.HandleFunc("/api/v1/register/", register)
-	http.HandleFunc("/api/v1/send_expr/", Authorization(handleExpr))      //POST Запрос отправки вычисления выражения
-	http.HandleFunc("/api/v1/get_id_result/", Authorization(getIdResult)) //POST Запрос отправки вычисления выражения
+	http.HandleFunc("/api/v1/send_expr/", Authorization(handleExpr))               //POST Запрос отправки вычисления выражения
+	http.HandleFunc("/api/v1/get_id_result/", Authorization(getIdResult))          //POST Запрос отправки вычисления выражения
+	http.HandleFunc("/api/v1/get_task_list/", Authorization(getTaskList))          //GET получение списка задач у оркестратора
+	http.HandleFunc("/api/v1/get_list_task_time/", Authorization(getListTaskTime)) //Получение списка незавершенных задач
+	http.HandleFunc("/api/v1/get_agent_list/", Authorization(getAgentList))        //получение списка агентов с выполняемыми операциями
 
 	log.Print("Listening on :8080...")
 	err := http.ListenAndServe(":8080", nil)
