@@ -74,8 +74,7 @@ func (s *Server) RegisterNewAgent(ctx context.Context, in *pb.AgentParams) (*pb.
 }
 
 func (s *Server) PushFinishTask(ctx context.Context, task *pb.Task) (*pb.Task, error) {
-	fmt.Println("принимаем решенную задачу: ", task)
-	//TODO сделать занесение решенной задачи в БД
+	//fmt.Println("принимаем решенную задачу: ", task)
 	UpdateTask(task)
 	return task, nil
 }
@@ -155,7 +154,7 @@ func SndTsk(agent Agent, task *pb.Task) (*pb.Task, error) {
 		log.Println("failed invoking tskAgent: ", err)
 		return nil, err
 	}
-	fmt.Println("tskAgent:  ", tskAgent)
+	//fmt.Println("tskAgent:  ", tskAgent)
 
 	return tskAgent, nil
 }

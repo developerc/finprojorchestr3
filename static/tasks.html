@@ -7,7 +7,7 @@
 </head>
 <body>
  <h1>Тестирование приложения "Распределенный калькулятор"</h1>
-<p>Для тестирования решения задачи валидны символы плюс +, минус -, умножить *, разделить /, круглые скобки (), точка .</p>
+<p>Для тестирования решения задачи валидны символы плюс +, минус -, умножить *, разделить /, круглые скобки (), точка . и возведение в степень ^</p>
 <p>Например 2 + 3 * (5 - 4)/20</p>
 <p>Введите текст задачи и нажмите кнопку "Отослать для решения"</p>
 <label> Текст задачи:  </label>
@@ -134,13 +134,8 @@ $.ajax({
                 var json = $.parseJSON(stringData);
 				console.log(json);
 				taVal = ""
-				$(json).each(function (i, v) {
-					//$.each(val, function (k, v) {
-					//console.log(k + " : " + v);
-					//var task = $.parseJSON(v);
-					//$("#textarea").val(v.result);
-					taVal = taVal + "ID задачи: " + v.id + " ID агента: " + v.agentid + " Задача: " + v.expr + " Результат: " + v.result+  " Статус: " + v.status +  " Дата начала: " + v.begindate +  " Дата окончания: " + v.enddate +"\n"
-				  //});
+				$(json).each(function (i, v) {					
+					taVal = taVal + "ID задачи: " + v.id + " ID агента: " + v.agentid + " Задача: " + v.expr + " Результат: " + v.result+  " Статус: " + v.status +  " Дата начала: " + v.begindate +  " Дата окончания: " + v.enddate +"\n"				  
 				});
 				$("#textarea1").val(taVal);
             },
@@ -178,16 +173,12 @@ $.ajax({
 				taVal = ""
 				$(json).each(function (i, val) {					
 					console.log( val);
-					var begdat = new Date(val.begindate)
-					//console.log(begdat.getTime())
-					const currentTime   = new Date().getTime();
-					//console.log(currentTime)
-					var seconds = (currentTime - begdat.getTime())/1000					
-					//console.log(seconds)					
+					var begdat = new Date(val.begindate)					
+					const currentTime   = new Date().getTime();					
+					var seconds = (currentTime - begdat.getTime())/1000															
 					taVal = taVal + "ID задачи: " + val.id + " ID агента: " + val.agentid + " Задача: " + val.expr + " Результат: " + val.result+  " Статус: " + val.status +  " Дата начала: " + val.begindate +  " Продолжительность, сек: " + seconds +"\n"				  
 				});
-				$("#textarea2").val(taVal);
-				
+				$("#textarea2").val(taVal);				
             },
 			statusCode: {				
 				400: function() {				  
@@ -226,8 +217,7 @@ $.ajax({
             },
 			statusCode: {				
 				400: function() {				  
-					alert("Это не GET запрос!");	
-					//document.location.href = './tasks.html'; 				
+					alert("Это не GET запрос!");										
 				},
 				401: function() {				  
 					alert("Пользователь не авторизован!");	

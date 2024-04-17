@@ -132,7 +132,7 @@ func GetTasksInProgress() ([]Task, error) {
 }
 
 func GetAllTasks() ([]Task, error) {
-	fmt.Println("from GetAllTasks")
+	//fmt.Println("from GetAllTasks")
 	var tasks []Task = make([]Task, 0)
 	ctx := context.TODO()
 
@@ -162,7 +162,7 @@ func GetAllTasks() ([]Task, error) {
 }
 
 func GetTaskById(id int64) (Task, error) {
-	fmt.Println("from GetTaskById id:", id)
+	//fmt.Println("from GetTaskById id:", id)
 	var task Task = Task{}
 	ctx := context.TODO()
 
@@ -344,6 +344,6 @@ func checkTables() {
 	}
 	defer rows.Close()
 	for rows.Next() {
-		fmt.Println("rows")
+		//fmt.Println("rows")
 	}
 }

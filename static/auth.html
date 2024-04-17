@@ -17,10 +17,7 @@
     
 
     <script>
-        $("#button1").on("click", function(){   //запрос на авторизацию
-            //var lgn = $("#lgn").val()
-            //console.log(window.localStorage.getItem("mytoken"))
-            //console.log(lgn)
+        $("#button1").on("click", function(){   //запрос на авторизацию            
             var url = "http://localhost:8080/api/v1/login/?lgn=" + $("#lgn").val() + "&psw=" + $("#psw").val()
                 $.ajax({
                 type: 'POST',
@@ -35,7 +32,7 @@
                     switch(data.result){
                         case "success":
                             window.localStorage.setItem("mytoken", data.token);
-                            console.log(window.localStorage.getItem("mytoken"));
+                            //console.log(window.localStorage.getItem("mytoken"));
                             $("#succ").text("Пользователь успешно авторизовался");
                             $("#succ").css("color", "green");
                             document.location.href = './tasks.html'; 
@@ -90,12 +87,7 @@
                             $("#succ").text("Ошибка регистрации пользователя")
                         }                        
                         $("#succ").css("color", "red")
-                    }
-                    //var token = data.token
-                    //window.localStorage.setItem("mytoken", token);
-                    //console.log(window.localStorage.getItem("mytoken"))
-                    //document.location.href = './example.html'; 
-                    //window.location.href = "https://dzen.ru";                    
+                    }                                    
                 },
                 statusCode: {				
                     400: function() {				  

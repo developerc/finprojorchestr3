@@ -45,7 +45,7 @@ func makeToken(lgn string) string {
 		panic(err)
 	}
 
-	fmt.Println(tokenString)
+	//fmt.Println(tokenString)
 	return tokenString
 }
 
@@ -142,7 +142,7 @@ func getIdResult(w http.ResponseWriter, r *http.Request) { //Получение 
 		return
 	}
 	id := r.URL.Query().Get("id")
-	fmt.Println("id: ", id)
+	//fmt.Println("id: ", id)
 	//вызовем функцию получения задачи по id
 	n, err := strconv.ParseInt(id, 10, 64)
 	if err == nil {
@@ -156,7 +156,7 @@ func getIdResult(w http.ResponseWriter, r *http.Request) { //Получение 
 		w.Write([]byte("not fount task with ID"))
 		return
 	}
-	fmt.Println(task)
+	//fmt.Println(task)
 	// В ответе JSON с ID нужной задачи
 	js, err := json.Marshal(task)
 	if err != nil {
@@ -186,7 +186,7 @@ func handleExpr(w http.ResponseWriter, r *http.Request) { //обрабатыва
 		return
 	}
 	expr := r.URL.Query().Get("expr")
-	fmt.Println(expr)
+	//fmt.Println(expr)
 
 	task, err := server.HandleHttpExpr(expr)
 	if err != nil {
@@ -218,8 +218,8 @@ func register(w http.ResponseWriter, r *http.Request) {
 
 	lgn := r.URL.Query().Get("lgn")
 	psw := r.URL.Query().Get("psw")
-	fmt.Println("register lgn", lgn)
-	fmt.Println("register psw", psw)
+	//fmt.Println("register lgn", lgn)
+	//fmt.Println("register psw", psw)
 	var reg Registration
 	//добавляем в БД пользователя
 	err := server.InsertUser(lgn, psw)
@@ -233,7 +233,7 @@ func register(w http.ResponseWriter, r *http.Request) {
 	} else {
 		reg.Result = "success"
 	}
-	fmt.Println("err InsertUser: ", err)
+	//fmt.Println("err InsertUser: ", err)
 	//token := makeToken()
 	//auth.Token = token
 	//В ответе отсылаем результат регистрации
@@ -260,8 +260,8 @@ func login(w http.ResponseWriter, r *http.Request) {
 	}
 	lgn := r.URL.Query().Get("lgn")
 	psw := r.URL.Query().Get("psw")
-	fmt.Println("lgn", lgn)
-	fmt.Println("psw", psw)
+	//fmt.Println("lgn", lgn)
+	//fmt.Println("psw", psw)
 	var auth Auth
 	//если аутентификация успешна
 	if err := server.IsPswValid(lgn, psw); err == nil {
@@ -291,7 +291,7 @@ func Authorization(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		auth := r.Header.Get("Authorization") // получаем из заголовка значение параметра Authorization
-		fmt.Println("Authorization: ", auth)
+		//fmt.Println("Authorization: ", auth)
 		tokenFromString, err := jwt.Parse(auth, func(token *jwt.Token) (interface{}, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				//panic(fmt.Errorf("unexpected signing method: %v", token.Header["alg"]))
@@ -305,7 +305,7 @@ func Authorization(next http.HandlerFunc) http.HandlerFunc {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized) // вернём ошибку авторизации 401
 		}
 		if claims, ok := tokenFromString.Claims.(jwt.MapClaims); ok {
-			fmt.Println("user name: ", claims["name"])
+			//fmt.Println("user name: ", claims["name"])
 			//проверим есть ли такое имя в базе
 			if err = server.LoginExists(claims["name"].(string)); err != nil {
 				log.Println(err)
