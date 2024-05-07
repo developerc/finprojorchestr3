@@ -7,6 +7,7 @@ C:\proj\Go\Exam\finprojorchestr2> go mod init github.com/developerc/finprojorche
 mkdir proto
 mkdir grpc
 в папке proto создал файл grpc.proto
+пакеты в файлах *.proto у сервера и у клиента должны быть одинаковы
 создал файлы 
 grpc/client/clnt.go
 grpc/server/srv.go
